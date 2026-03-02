@@ -257,18 +257,6 @@ If you can't [connect to your VM](../../wiki/vm.md#connect-to-the-vm), complete 
    cp .env.docker.example .env.docker.secret
    ```
 
-<!-- TODO do something about these notes -->
-
-> [!NOTE]
-> The `.env.docker.secret` file contains environment variables for the `Docker` containers.
->
-> It was added to [`.gitignore`](../../.gitignore) because you may specify there
-> [secrets](../../wiki/environments.md#secrets) such as the API key or the [address of your VM](../../wiki/vm.md#your-vm-ip-address).
-
-> [!TIP]
-> No edits are needed for local development.
-> The default values in [`.env.docker.example`](../../.env.docker.example) work out of the box.
-
 #### 1.11.2. (UPD) Start the services using `Docker Compose`
 
 > [!NOTE]
@@ -298,7 +286,8 @@ If you can't [connect to your VM](../../wiki/vm.md#connect-to-the-vm), complete 
    [run in the `VS Code Terminal`](../../wiki/vs-code.md#run-a-command-in-the-vs-code-terminal):
 
    ```terminal
-   docker compose --env-file .env.docker.secret down && docker compose --env-file .env.docker.secret up --build
+   docker compose --env-file .env.docker.secret down -v
+   docker compose --env-file .env.docker.secret up --build
    ```
 
    <h4>Image pull fails</h4>
@@ -328,7 +317,21 @@ If you can't [connect to your VM](../../wiki/vm.md#connect-to-the-vm), complete 
    docker compose --env-file .env.docker.secret ps
    ```
 
-   You should see four services (`app`, `postgres`, `pgadmin`, `caddy`) with the status `Up`.
+1. To look at services and their statuses specifically,
+
+   ```terminal
+   docker compose --env-file .env.docker.secret ps --format "table {{.Service}}\t{{.Status}}"
+   ```
+
+   You should see a similar output:
+
+   ```terminal
+   SERVICE    STATUS
+   app        Up 3 minutes
+   caddy      Up 3 minutes
+   pgadmin    Up 3 minutes
+   postgres   Up 3 minutes (healthy)
+   ```
 
 #### 1.12.3. (UPD) See logs of the running services
 
@@ -350,7 +353,8 @@ If you can't [connect to your VM](../../wiki/vm.md#connect-to-the-vm), complete 
    docker compose --env-file .env.docker.secret logs postgres
    ```
 
-   You should see only the `postgres` service logs, including a line like `database system is ready to accept connections`.
+   You should see only the `postgres` service logs,
+   including a line like `database system is ready to accept connections`.
 
 ### 1.13. (UPD) Set up `Swagger UI`
 
@@ -368,7 +372,7 @@ If you can't [connect to your VM](../../wiki/vm.md#connect-to-the-vm), complete 
 > [`pgAdmin`](../../wiki/pgadmin.md#what-is-pgadmin) takes 2-3 minutes to start after you have started the services.
 
 1. [Open `pgAdmin`](../../wiki/pgadmin.md#open-pgadmin).
-2. [Add a server in `pgAdmin`](../../wiki/pgadmin.md#connect-to-the-postgresql-server).
+2. [Connect `pgAdmin` to the `PostgreSQL` server](../../wiki/pgadmin.md#connect-to-the-postgresql-server).
 
 <details><summary>Troubleshooting</summary>
 
@@ -390,8 +394,8 @@ Make sure the services are running. Go back to [step 1.11.2](#1112-upd-start-the
 
    <img alt="Interaction logs" src="../images/tasks/setup/database-interaction-logs.png" style="width:400px"></img>
 
-   These are records of what `learner`s did with `item`s (courses, labs, tasks, steps).
-   `learner`s `attempt`ed, `complete`d or just `view`ed `item`s.
+   These are records of what [`learner`s](../../docs/design/domain-model.md#learner) did with [`item`s](../../docs/design/domain-model.md#item) (courses, labs, tasks, steps).
+   `learner`s [`attempt`ed](../../docs/design/domain-model.md#attempt), [`complete`d](../../docs/design/domain-model.md#complete) or just [`view`ed](../../docs/design/domain-model.md#view) `item`s.
 
 2. Verify that the following tables also exist:
    - `item`
@@ -400,13 +404,7 @@ Make sure the services are running. Go back to [step 1.11.2](#1112-upd-start-the
 ### 1.15. (UPD) Stop the services
 
 1. [Check that the current directory is `se-toolkit-lab-4`](../../wiki/shell.md#check-the-current-directory-is-directory-name).
-2. To stop the services,
-
-   [run in the `VS Code Terminal`](../../wiki/vs-code.md#run-a-command-in-the-vs-code-terminal):
-
-   ```terminal
-   docker compose --env-file .env.docker.secret down
-   ```
+2. [Stop and remove all containers and volumes](../../wiki/docker-compose.md#stop-and-remove-all-containers-and-volumes).
 
 ### 1.16. Set up the autochecker
 
@@ -525,7 +523,7 @@ Complete these steps:
 
 If you want to view [`README.md`](../../README.md) and other `Markdown` files in `VS Code` instead of on `GitHub`:
 
-1. [Install recommended `VS Code` extensions](../../wiki/vs-code.md#install-recommended-extensions).
+1. [Install the recommended `VS Code` extensions](../../wiki/vs-code.md#install-the-recommended-vs-code-extensions).
 2. [Open the file](../../wiki/vs-code.md#open-the-file):
    [`README.md`](../../README.md).
 3. [Open the `Markdown` preview](../../wiki/vs-code.md#open-the-markdown-preview).
