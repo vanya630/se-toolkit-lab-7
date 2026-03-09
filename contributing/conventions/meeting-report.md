@@ -28,15 +28,16 @@
   - [4.2. Metadata](#42-metadata)
   - [4.3. Executive summary](#43-executive-summary)
   - [4.4. Action points](#44-action-points)
-  - [4.5. Key dates and deadlines](#45-key-dates-and-deadlines)
-  - [4.6. Decisions](#46-decisions)
-    - [4.6.1. Example format](#461-example-format)
-  - [4.7. Open questions](#47-open-questions)
-  - [4.8. Status updates](#48-status-updates)
-  - [4.9. Questions and answers](#49-questions-and-answers)
-  - [4.10. Discussions](#410-discussions)
-  - [4.11. Glossary](#411-glossary)
-  - [4.12. Coverage check](#412-coverage-check)
+  - [4.5. Key dates](#45-key-dates)
+  - [4.6. Deadlines](#46-deadlines)
+  - [4.7. Decisions](#47-decisions)
+    - [4.7.1. Example format](#471-example-format)
+  - [4.8. Open questions](#48-open-questions)
+  - [4.9. Status updates](#49-status-updates)
+  - [4.10. Questions and answers](#410-questions-and-answers)
+  - [4.11. Discussions](#411-discussions)
+  - [4.12. Glossary](#412-glossary)
+  - [4.13. Coverage check](#413-coverage-check)
 
 ## 1. File locations
 
@@ -87,7 +88,7 @@ If something in the transcript is inaudible or the meaning is ambiguous, flag it
 
 Only record decisions that were explicitly stated or clearly agreed upon.
 Do not infer consensus from silence.
-Proposals, hypotheticals, and "what if" suggestions that were not concluded belong in [Open questions](#47-open-questions), not [Decisions](#46-decisions).
+Proposals, hypotheticals, and "what if" suggestions that were not concluded belong in [Open questions](#48-open-questions), not [Decisions](#47-decisions).
 
 ### 2.9. Superseded decisions
 
@@ -105,7 +106,7 @@ Write each distinct item within a section — numbered decisions, open questions
 Write the content beneath the heading as prose paragraphs.
 This makes each item individually linkable via a Markdown anchor.
 Never use bold text to label items within a section.
-Each heading must use the format `### S.N. Label N: Title` — where `S.N.` is the two-level section number (e.g., `5.2.`), `Label` is the section label (`Decision`, `Open question`, `Action point`, `Date or deadline`, `Question and answer`, or `Discussion`), and `N` is the item number within that section (omitted for `Date or deadline`, `Question and answer`, and `Discussion`).
+Each heading must use the format `### S.N. Label N: Title` — where `S.N.` is the two-level section number (e.g., `5.2.`), `Label` is the section label (`Decision`, `Open question`, `Action point`, `Key date`, `Deadline`, `Question and answer`, or `Discussion`), and `N` is the item number within that section (omitted for `Key date`, `Deadline`, `Question and answer`, and `Discussion`).
 
 ### 2.12. Clean headings
 
@@ -138,7 +139,7 @@ A 15-minute standup should not produce the same volume as a 2-hour planning sess
 
 ### 2.17. Off-topic digressions
 
-Off-topic digressions (tools, mentoring, industry news, etc.) should still be captured in the relevant section (usually [Discussions](#410-discussions)).
+Off-topic digressions (tools, mentoring, industry news, etc.) should still be captured in the relevant section (usually [Discussions](#411-discussions)).
 
 ### 2.18. Recurring meetings
 
@@ -148,7 +149,7 @@ If the transcript references a prior meeting or is clearly part of a series, not
 
 Write a comprehensive meeting report based on the provided transcript.
 
-Go through the transcript **line by line for substantive content** and make sure every point, detail, example, quote, and discussion is captured in the appropriate section. In the [Decisions](#46-decisions), [Q&A](#49-questions-and-answers), and [Discussions](#410-discussions) sections, do not summarize — expand. Include specific examples, analogies, and arguments that speakers used. If speakers disagreed or evolved their position during the discussion, capture that progression. If speakers outright contradicted each other without resolution, note the disagreement explicitly.
+Go through the transcript **line by line for substantive content** and make sure every point, detail, example, quote, and discussion is captured in the appropriate section. In the [Decisions](#47-decisions), [Q&A](#410-questions-and-answers), and [Discussions](#411-discussions) sections, do not summarize — expand. Include specific examples, analogies, and arguments that speakers used. If speakers disagreed or evolved their position during the discussion, capture that progression. If speakers outright contradicted each other without resolution, note the disagreement explicitly.
 
 ## 4. Sections
 
@@ -177,11 +178,15 @@ A structured block at the top of the report:
 
 Concrete next steps with owners (by speaker label) and deadlines (if mentioned). Write each action point as a subsection heading in the format `### S.N. Action point N: Title` followed by a prose paragraph that states the owner, priority (**[blocking]**, **[high]**, **[medium]**, or **[low]**), scheduling details, and any relevant context. If a task was mentioned but no owner was assigned, say so in the prose. Do not place owner or priority on a separate bold-label line before the paragraph. Every action point originates from a decision, discussion, or open question — cross-reference the source item using an anchor link (e.g., `"Stems from [Decision 2](#52-decision-2-use-postgresql-for-the-primary-data-store)"`). If a single decision spawns multiple action points, each one should link back independently.
 
-### 4.5. Key dates and deadlines
+### 4.5. Key dates
 
-Dates, deadlines, and milestones mentioned during the meeting, even in passing. Write each distinct date as a subsection heading in the format `### S.N. Date or deadline: Title` followed by a prose paragraph describing what the date refers to, who mentioned it, and any relevant context. Do not use a bullet list with bold labels.
+Dates and milestones mentioned during the meeting, even in passing. Write each distinct date as a subsection heading in the format `### S.N. Key date: Title` followed by a prose paragraph describing what the date refers to, who mentioned it, and any relevant context. Do not use a bullet list with bold labels.
 
-### 4.6. Decisions
+### 4.6. Deadlines
+
+Deadlines mentioned during the meeting, even in passing. Write each deadline as a subsection heading in the format `### S.N. Deadline: Title` followed by a prose paragraph describing what the deadline refers to, who mentioned it, and any relevant context. Do not use a bullet list with bold labels.
+
+### 4.7. Decisions
 
 **This is the largest section.** Number each decision. Every conclusion, agreement, or direction discussed should be its own numbered item — even small ones. Write each decision as a subsection heading in the format `### S.N. Decision N: Title`. Group decisions by topic, not by chronological order. For each decision, include:
 
@@ -194,9 +199,9 @@ Dates, deadlines, and milestones mentioned during the meeting, even in passing. 
 
 Be exhaustive — capture every distinct decision, no matter how small. Cover all topics raised: naming, data model, scope, task structure, implementation approach, security, testing, deployment, tooling, terminology, ordering, scheduling, and anything else discussed.
 
-**Important**: Only include conclusions that were explicitly agreed upon. Proposals and hypotheticals that were not resolved belong in [Open questions](#47-open-questions).
+**Important**: Only include conclusions that were explicitly agreed upon. Proposals and hypotheticals that were not resolved belong in [Open questions](#48-open-questions).
 
-#### 4.6.1. Example format
+#### 4.7.1. Example format
 
 ```markdown
 ### 5.1. Decision 1: Use PostgreSQL for the primary data store
@@ -205,15 +210,15 @@ Be exhaustive — capture every distinct decision, no matter how small. Cover al
 Speaker A proposed PostgreSQL, citing its JSON support for flexible schemas. Speaker B initially suggested MongoDB but agreed after Speaker A demonstrated that PostgreSQL's JSONB columns would cover the same use case without adding a second database. Speaker C noted: "We already have operational expertise with Postgres, so this keeps the ops burden low." *(See [Action point 3](#73-action-point-3-deploy-database-migrations))*
 ```
 
-### 4.7. Open questions
+### 4.8. Open questions
 
-Things that were raised but not resolved — including proposals, hypotheticals, and "what if" suggestions that did not reach a conclusion. Write each open question as a subsection heading in the format `### S.N. Open question N: Title`. Include context on why they remain open, any preliminary opinions expressed, and any disagreements that prevented resolution. Cross-reference related [Decisions](#46-decisions) where applicable.
+Things that were raised but not resolved — including proposals, hypotheticals, and "what if" suggestions that did not reach a conclusion. Write each open question as a subsection heading in the format `### S.N. Open question N: Title`. Include context on why they remain open, any preliminary opinions expressed, and any disagreements that prevented resolution. Cross-reference related [Decisions](#47-decisions) where applicable.
 
-### 4.8. Status updates
+### 4.9. Status updates
 
 What is already done, built, deployed, or available before this meeting. Include specifics: which artifacts exist (documents, prototypes, deployed services, repos), what tools were used or demonstrated during the meeting, and any issues encountered. Write each distinct status item as a subsection heading followed by prose — do not use bold labels in a bullet list.
 
-### 4.9. Questions and answers
+### 4.10. Questions and answers
 
 Questions that came up during the meeting and were answered on the spot. Write each Q&A pair as a subsection heading in the format `### S.N. Question and answer: Question text` (e.g., `### 10.1. Question and answer: What mechanism can we use to...`) followed by prose paragraphs. The heading contains only the label and the question — do not use bold `**Q:**` labels, and do not append speaker attribution or timestamps to the heading. State who asked, who answered, and the relevant timestamp range in the opening sentence of the paragraph instead. Include:
 
@@ -222,21 +227,21 @@ Questions that came up during the meeting and were answered on the spot. Write e
 
 When a speaker presents slides, gives a demo, or shares a screen for an extended monologue, write it as a `### S.N. Demo: Title` or `### S.N. Presentation: Title` subsection: summarize the content presented, then capture the discussion that followed in full detail.
 
-### 4.10. Discussions
+### 4.11. Discussions
 
 Extended conversations, off-topic digressions (tools, mentoring experiences, industry news), and other substantive exchanges that are not direct Q&A pairs. Write each distinct discussion as a subsection heading in the format `### S.N. Discussion: Topic` (e.g., `### 11.1. Discussion: Deployment strategy trade-offs`) followed by prose paragraphs. The heading contains only the label and the topic — do not use bold `**Discussion:**` labels, and do not append speaker attribution or timestamps to the heading. State who participated and the relevant timestamp range in the opening sentence of the paragraph instead.
 
-### 4.11. Glossary
+### 4.12. Glossary
 
 If the meeting introduced, defined, or clarified any terms, acronyms, or project-specific jargon, include them here. Omit this section if no new terminology was introduced. Write each term as a subsection heading (e.g., `### Sprint Review`) followed by a prose paragraph with the definition. This makes each term individually referenceable via a Markdown anchor.
 
-### 4.12. Coverage check
+### 4.13. Coverage check
 
 After completing the report, review the transcript one more time and verify:
 
 - Every speaker who contributed substantively is referenced at least once
 - Every topic transition in the transcript is accounted for in a section
 - No decisions were inferred — all are explicitly stated or agreed upon
-- Proposals and hypotheticals are in [Open questions](#47-open-questions), not [Decisions](#46-decisions)
+- Proposals and hypotheticals are in [Open questions](#48-open-questions), not [Decisions](#47-decisions)
 
 If any gaps are found, go back and fill them in. Do not include this checklist in the final report.
