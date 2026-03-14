@@ -192,9 +192,9 @@ The file must be non-empty.
    nano .env
    ```
 
-6. Write the value of `QWEN_API_KEY`.
+6. Write an arbitrary value for `QWEN_API_KEY`.
 
-   You'll use it in requests to the API.
+   This key will protect your `Qwen Code` API.
 
 7. Save the file (`Ctrl + O`).
 
