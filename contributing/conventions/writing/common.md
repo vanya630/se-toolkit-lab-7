@@ -26,7 +26,10 @@
 - [4.24. Inline paths](#424-inline-paths)
 - [4.25. Branch-on-remote references](#425-branch-on-remote-references)
 - [4.26. Example IP address](#426-example-ip-address)
-- [4.27. Troubleshooting sections](#427-troubleshooting-sections)
+- [4.27. Troubleshooting](#427-troubleshooting)
+  - [Inline troubleshooting](#inline-troubleshooting)
+  - [Troubleshooting section](#troubleshooting-section)
+  - [Cross-references](#cross-references)
 - [4.28. JSON command output](#428-json-command-output)
 - [4.29. Referring to users of a machine](#429-referring-to-users-of-a-machine)
 - [4.30. Section titles with execution context](#430-section-titles-with-execution-context)
@@ -466,9 +469,9 @@ Good: `192.0.2.1`
 
 Bad: `192.168.1.1`, `10.0.0.1`
 
-## 4.27. Troubleshooting sections
+## 4.27. Troubleshooting
 
-Use a blockquote for troubleshooting content. Do **not** use `<details>` blocks.
+Use a blockquote for all troubleshooting content. Do **not** use `<details>` blocks.
 
 Start with an `<h3>Troubleshooting</h3>` label. Each issue is a bold sentence followed by its resolution:
 
@@ -482,6 +485,52 @@ Start with an `<h3>Troubleshooting</h3>` label. Each issue is a bold sentence fo
 > **Another issue.**
 >
 > Resolution text.
+```
+
+### Inline troubleshooting
+
+Place a troubleshooting blockquote directly after the step or section it relates to. This is the preferred form when only one or two issues apply to a specific step.
+
+~~~markdown
+1. To connect to the VM,
+
+   [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
+
+   ```terminal
+   ssh <user>@<vm-ip>
+   ```
+
+> <h3>Troubleshooting</h3>
+>
+> **Connection refused.**
+>
+> Resolution text.
+~~~
+
+### Troubleshooting section
+
+When troubleshooting applies to the document as a whole — or when there are many issues — place a `## Troubleshooting` section at the **end of the document**. Add it to the table of contents.
+
+```markdown
+## Troubleshooting
+
+> <h3>Troubleshooting</h3>
+>
+> **Issue title**
+>
+> Resolution text.
+```
+
+### Cross-references
+
+When a step's troubleshooting is already covered in a dedicated section of the same file or another file, use a blockquote with one linked bold title per problem instead of duplicating content:
+
+```markdown
+> <h3>Troubleshooting</h3>
+>
+> [**Issue title**](#issue-title)
+>
+> [**Another issue**](#another-issue)
 ```
 
 ## 4.28. JSON command output
