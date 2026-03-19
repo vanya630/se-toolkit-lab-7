@@ -211,7 +211,7 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 
 #### Install `pnpm` via `Nix`
 
-1. [Install `Nix`](./nix.md#install-nix) if it's not yet installed.
+1. [Install `Nix`](./nix.md#install-nix).
 
 2. To install [`pnpm`](#pnpm) from [`nixpkgs`](./nix.md#nixpkgs),
 
