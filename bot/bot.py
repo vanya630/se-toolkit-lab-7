@@ -8,15 +8,20 @@ Usage:
 import sys
 import argparse
 import logging
+from pathlib import Path
+
+# Add bot directory to path for imports
+bot_dir = Path(__file__).parent
+sys.path.insert(0, str(bot_dir))
 
 from config import load_config
-from handlers import (
-    handle_start,
-    handle_help,
-    handle_health,
-    handle_labs,
-    handle_scores,
-)
+
+# Import handlers directly to avoid circular imports
+from handlers.start import handle_start
+from handlers.help import handle_help
+from handlers.health import handle_health
+from handlers.labs import handle_labs
+from handlers.scores import handle_scores
 
 # Configure logging
 logging.basicConfig(

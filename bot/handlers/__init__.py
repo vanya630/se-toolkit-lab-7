@@ -4,11 +4,11 @@ Handlers are pure functions that take input and return text.
 They don't know about Telegram - this makes them testable.
 """
 
-from .start import handle_start
-from .help import handle_help
-from .health import handle_health
-from .labs import handle_labs
-from .scores import handle_scores
+from handlers.start import handle_start
+from handlers.help import handle_help
+from handlers.health import handle_health
+from handlers.labs import handle_labs
+from handlers.scores import handle_scores
 
 __all__ = [
     "handle_start",
