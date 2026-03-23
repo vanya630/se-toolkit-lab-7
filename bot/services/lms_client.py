@@ -171,8 +171,170 @@ class LMSClient:
         
         return None
 
-    def get_scores(self, user_id: int, lab_id: int | None = None) -> list[dict]:
-        """Get scores for a user.
+    def get_scores(self, lab: str) -> list[dict]:
+        """Get score distribution for a lab (4 buckets).
+
+        Args:
+            lab: Lab identifier (e.g., "lab-04")
+
+        Returns:
+            List of score bucket records
+        """
+        try:
+            response = self._client.get(
+                "/analytics/scores",
+                params={"lab": lab}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return []
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
+            self._handle_request_error(e)
+            return []
+
+    def get_learners(self) -> list[dict]:
+        """Get all enrolled learners.
+
+        Returns:
+            List of learner records
+        """
+        try:
+            response = self._client.get("/learners/")
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return []
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
+            self._handle_request_error(e)
+            return []
+
+    def get_timeline(self, lab: str) -> list[dict]:
+        """Get submissions per day for a lab.
+
+        Args:
+            lab: Lab identifier (e.g., "lab-04")
+
+        Returns:
+            List of timeline records with date and submissions count
+        """
+        try:
+            response = self._client.get(
+                "/analytics/timeline",
+                params={"lab": lab}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return []
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
+            self._handle_request_error(e)
+            return []
+
+    def get_groups(self, lab: str) -> list[dict]:
+        """Get per-group scores and student counts for a lab.
+
+        Args:
+            lab: Lab identifier (e.g., "lab-04")
+
+        Returns:
+            List of group records with avg_score and students count
+        """
+        try:
+            response = self._client.get(
+                "/analytics/groups",
+                params={"lab": lab}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return []
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
+            self._handle_request_error(e)
+            return []
+
+    def get_top_learners(self, lab: str, limit: int = 10) -> list[dict]:
+        """Get top N learners by score for a lab.
+
+        Args:
+            lab: Lab identifier (e.g., "lab-04")
+            limit: Number of top learners to return
+
+        Returns:
+            List of top learner records with avg_score and attempts
+        """
+        try:
+            response = self._client.get(
+                "/analytics/top-learners",
+                params={"lab": lab, "limit": limit}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return []
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
+            self._handle_request_error(e)
+            return []
+
+    def get_completion_rate(self, lab: str) -> dict:
+        """Get completion rate percentage for a lab.
+
+        Args:
+            lab: Lab identifier (e.g., "lab-04")
+
+        Returns:
+            Dict with completion_rate, passed, and total counts
+        """
+        try:
+            response = self._client.get(
+                "/analytics/completion-rate",
+                params={"lab": lab}
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return {"completion_rate": 0.0, "passed": 0, "total": 0}
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {"completion_rate": 0.0, "passed": 0, "total": 0}
+            self._handle_request_error(e)
+            return {"completion_rate": 0.0, "passed": 0, "total": 0}
+
+    def trigger_sync(self) -> dict:
+        """Trigger a data sync from autochecker.
+
+        Returns:
+            Dict with sync status
+        """
+        try:
+            response = self._client.post("/pipeline/sync")
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as e:
+            self._handle_request_error(e)
+            return {"status": "error", "message": str(e)}
+        except httpx.HTTPStatusError as e:
+            self._handle_request_error(e)
+            return {"status": "error", "message": str(e)}
+
+    def get_scores_for_user(self, user_id: int, lab_id: int | None = None) -> list[dict]:
+        """Get scores for a specific user.
 
         Args:
             user_id: User ID (Telegram chat ID for now)

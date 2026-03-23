@@ -17,11 +17,12 @@ sys.path.insert(0, str(bot_dir))
 from config import load_config
 
 # Import handlers directly to avoid circular imports
-from handlers.start import handle_start
+from handlers.start import handle_start, get_start_keyboard
 from handlers.help import handle_help
 from handlers.health import handle_health
 from handlers.labs import handle_labs
 from handlers.scores import handle_scores
+from handlers.natural_language import handle_natural_language
 
 # Configure logging
 logging.basicConfig(
@@ -64,23 +65,29 @@ def get_handler_for_command(command: str):
 
 def run_test_mode(command: str) -> int:
     """Run the bot in test mode.
-    
+
     Calls handlers directly without Telegram connection.
     Prints response to stdout and exits.
-    
+
     Args:
         command: Command to test (e.g., "/start" or "what labs are available")
-        
+
     Returns:
         Exit code (0 for success)
     """
     config = load_config()
     logger.info(f"Test mode: {command}")
     logger.info(f"Config loaded: LMS API = {config['lms_api_base_url']}")
-    
-    handler, user_input = get_handler_for_command(command)
-    response = handler(user_input)
-    
+
+    # Check if this is a natural language query (doesn't start with /)
+    if not command.strip().startswith("/"):
+        # Natural language query - use intent routing
+        response = handle_natural_language(command)
+    else:
+        # Command - use command routing
+        handler, user_input = get_handler_for_command(command)
+        response = handler(user_input)
+
     print(response)
     return 0
 
@@ -91,10 +98,9 @@ def run_telegram_bot():
     Connects to Telegram and starts listening for messages.
     """
     try:
-        from telegram import Update
+        from telegram import InlineKeyboardMarkup, Update
         from telegram.ext import (
             Application,
-            CommandHandler,
             MessageHandler,
             filters,
             ContextTypes,
@@ -117,14 +123,37 @@ def run_telegram_bot():
         """Handle natural language messages (for Task 3 - intent routing)."""
         user_message = update.message.text
 
-        # TODO: Implement intent routing in Task 3
-        # For now, respond with a placeholder
-        response = (
-            "🤔 I received your message. Intent routing will be implemented in Task 3.\n\n"
-            f"You said: {user_message}\n\n"
-            "Try commands like /start, /help, /labs, or /scores lab-04"
-        )
+        # Use intent routing
+        config = load_config()
         
+        try:
+            from services.lms_client import LMSClient
+            from services.llm_client import LLMClient
+            
+            # Initialize clients
+            lms_client = LMSClient(
+                base_url=config["lms_api_base_url"],
+                api_key=config["lms_api_key"]
+            )
+            llm_client = LLMClient(
+                api_key=config["llm_api_key"],
+                base_url=config["llm_api_base_url"],
+                model=config["llm_api_model"]
+            )
+
+            # Route the intent (no debug logging in production)
+            response = llm_client.route_intent(
+                user_message=user_message,
+                lms_client=lms_client,
+                debug_callback=None
+            )
+
+        except Exception as e:
+            response = (
+                f"⚠️ Error processing your message: {str(e)}\n\n"
+                "Try commands like /start, /help, /labs, or /scores lab-04"
+            )
+
         await update.message.reply_text(response)
     
     # Create application
@@ -136,7 +165,7 @@ def run_telegram_bot():
         """Handle all Telegram commands."""
         # Get the full command text (e.g., "/scores lab-04")
         full_text = update.message.text or ""
-        
+
         # Get any arguments after the command
         parts = full_text.split(maxsplit=1)
         user_input = parts[1] if len(parts) > 1 else ""
@@ -145,7 +174,12 @@ def run_telegram_bot():
         handler, _ = get_handler_for_command(parts[0])
         response = handler(user_input)
 
-        await update.message.reply_text(response)
+        # Add inline keyboard for /start command
+        if parts[0].lower() == "/start":
+            keyboard = get_start_keyboard()
+            await update.message.reply_text(response, reply_markup=InlineKeyboardMarkup(keyboard))
+        else:
+            await update.message.reply_text(response)
 
     application.add_handler(MessageHandler(filters.COMMAND, handle_all_commands))
 
