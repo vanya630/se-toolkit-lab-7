@@ -108,26 +108,15 @@ def run_telegram_bot():
     if not config["bot_token"]:
         logger.error("BOT_TOKEN not configured. Check .env.bot.secret")
         sys.exit(1)
-    
+
     logger.info("Starting Telegram bot...")
     logger.info(f"LMS API: {config['lms_api_base_url']}")
     logger.info(f"LLM API: {config['llm_api_base_url']}")
-    
-    async def handle_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle Telegram commands."""
-        command = f"/{update.message.command}"
-        if update.message.text and len(update.message.text.split()) > 1:
-            command += " " + " ".join(update.message.text.split()[1:])
-        
-        handler, user_input = get_handler_for_command(command)
-        response = handler(user_input)
-        
-        await update.message.reply_text(response)
-    
+
     async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle natural language messages (for Task 3 - intent routing)."""
         user_message = update.message.text
-        
+
         # TODO: Implement intent routing in Task 3
         # For now, respond with a placeholder
         response = (
@@ -140,12 +129,26 @@ def run_telegram_bot():
     
     # Create application
     application = Application.builder().token(config["bot_token"]).build()
-    
-    # Add command handlers
-    for cmd in COMMANDS.keys():
-        cmd_name = cmd[1:]  # Remove leading /
-        application.add_handler(CommandHandler(cmd_name, handle_command))
-    
+
+    # Add a single command handler for all commands
+    # We use a MessageHandler with a filter to catch all commands
+    async def handle_all_commands(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle all Telegram commands."""
+        # Get the full command text (e.g., "/scores lab-04")
+        full_text = update.message.text or ""
+        
+        # Get any arguments after the command
+        parts = full_text.split(maxsplit=1)
+        user_input = parts[1] if len(parts) > 1 else ""
+
+        # Route to appropriate handler based on command
+        handler, _ = get_handler_for_command(parts[0])
+        response = handler(user_input)
+
+        await update.message.reply_text(response)
+
+    application.add_handler(MessageHandler(filters.COMMAND, handle_all_commands))
+
     # Add message handler for natural language
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
