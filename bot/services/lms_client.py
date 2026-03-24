@@ -1,185 +1,152 @@
-"""LMS API client for fetching lab data and scores."""
+from __future__ import annotations
+
+from urllib.parse import urlparse
+from typing import Any, cast
 
 import httpx
 
 
-class LMSClientError(Exception):
-    """Base exception for LMS client errors."""
-    pass
-
-
-class LMSConnectionError(LMSClientError):
-    """Raised when backend is unreachable."""
-    pass
-
-
-class LMSAPIError(LMSClientError):
-    """Raised when API returns an error response."""
+class LMSClientError(RuntimeError):
     pass
 
 
 class LMSClient:
-    """Client for the Learning Management Service API."""
-
-    def __init__(self, base_url: str, api_key: str):
-        """Initialize the LMS client.
-
-        Args:
-            base_url: Base URL of the LMS API
-            api_key: API key for authentication
-        """
+    def __init__(self, base_url: str, api_key: str, timeout: float = 12.0) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
-        self._client = httpx.Client(
-            base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            timeout=10.0,
+        self.timeout = timeout
+
+    def _headers(self) -> dict[str, str]:
+        if not self.api_key:
+            raise LMSClientError("LMS_API_KEY is empty in .env.bot.secret")
+        return {"Authorization": f"Bearer {self.api_key}"}
+
+    def _host_label(self) -> str:
+        parsed = urlparse(self.base_url)
+        return parsed.netloc or self.base_url
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+    ) -> Any:
+        url = f"{self.base_url}{path}"
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                response = client.request(
+                    method,
+                    url,
+                    headers=self._headers(),
+                    params=params,
+                    json=json,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            reason = exc.response.reason_phrase
+            raise LMSClientError(f"HTTP {status} {reason}.") from exc
+        except httpx.ConnectError as exc:
+            raise LMSClientError(
+                f"connection refused ({self._host_label()}). Backend service may be down."
+            ) from exc
+        except httpx.TimeoutException as exc:
+            raise LMSClientError(
+                f"request timeout while contacting {self._host_label()}."
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise LMSClientError(str(exc)) from exc
+
+    def get_items(self) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/items/")
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /items/")
+
+    def get_learners(self) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/learners/")
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /learners/")
+
+    def get_scores(self, lab: str) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/analytics/scores", params={"lab": lab})
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /analytics/scores")
+
+    def get_pass_rates(self, lab: str) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/analytics/pass-rates", params={"lab": lab})
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /analytics/pass-rates")
+
+    def get_timeline(self, lab: str) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/analytics/timeline", params={"lab": lab})
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /analytics/timeline")
+
+    def get_groups(self, lab: str) -> list[dict[str, Any]]:
+        payload = self._request("GET", "/analytics/groups", params={"lab": lab})
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /analytics/groups")
+
+    def get_top_learners(self, lab: str, limit: int = 5) -> list[dict[str, Any]]:
+        payload = self._request(
+            "GET",
+            "/analytics/top-learners",
+            params={"lab": lab, "limit": limit},
         )
+        if isinstance(payload, list):
+            return cast(list[dict[str, Any]], payload)
+        raise LMSClientError("Unexpected response from /analytics/top-learners")
 
-    def _handle_request_error(self, e: httpx.RequestError) -> None:
-        """Convert httpx errors to user-friendly exceptions.
-        
-        Args:
-            e: The httpx exception
-            
-        Raises:
-            LMSConnectionError: For connection issues
-            LMSAPIError: For HTTP error responses
-        """
-        if isinstance(e, httpx.ConnectError):
-            raise LMSConnectionError(f"connection refused ({self.base_url}). Check that the services are running.")
-        elif isinstance(e, httpx.TimeoutException):
-            raise LMSConnectionError(f"timeout connecting to backend ({self.base_url})")
-        elif isinstance(e, httpx.HTTPStatusError):
-            raise LMSAPIError(f"HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down.")
-        else:
-            raise LMSConnectionError(f"{str(e)}. Check backend configuration.")
+    def get_completion_rate(self, lab: str) -> dict[str, Any]:
+        payload = self._request(
+            "GET", "/analytics/completion-rate", params={"lab": lab}
+        )
+        if isinstance(payload, dict):
+            return cast(dict[str, Any], payload)
+        raise LMSClientError("Unexpected response from /analytics/completion-rate")
 
-    def health_check(self) -> tuple[bool, str]:
-        """Check if the backend is accessible.
+    def trigger_sync(self) -> dict[str, Any]:
+        payload = self._request("POST", "/pipeline/sync", json={})
+        if isinstance(payload, dict):
+            return cast(dict[str, Any], payload)
+        raise LMSClientError("Unexpected response from /pipeline/sync")
 
-        Returns:
-            Tuple of (is_healthy, message)
-        """
-        try:
-            response = self._client.get("/items/")
-            response.raise_for_status()
-            items = response.json()
-            count = len(items) if isinstance(items, list) else 0
-            return True, f"Backend is healthy. {count} items available."
-        except httpx.RequestError as e:
-            error_msg = str(e)
-            if "connection refused" in error_msg.lower() or "connect" in error_msg.lower():
-                return False, f"Backend error: connection refused ({self.base_url}). Check that the services are running."
-            elif "timeout" in error_msg.lower():
-                return False, f"Backend error: timeout connecting to {self.base_url}"
-            else:
-                return False, f"Backend error: {error_msg}"
-        except httpx.HTTPStatusError as e:
-            return False, f"Backend error: HTTP {e.response.status_code} {e.response.reason_phrase}. The backend service may be down."
-        except Exception as e:
-            return False, f"Backend error: {str(e)}"
 
-    def get_items(self) -> list[dict]:
-        """Get all items (labs, tasks, etc.).
+def extract_labs(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [item for item in items if str(item.get("type", "")).lower() == "lab"]
 
-        Returns:
-            List of items from the API
-            
-        Raises:
-            LMSConnectionError: If backend is unreachable
-            LMSAPIError: If API returns error
-        """
-        try:
-            response = self._client.get("/items/")
-            response.raise_for_status()
-            return response.json()
-        except httpx.RequestError as e:
-            self._handle_request_error(e)
-            return []  # Never reached, but satisfies type checker
-        except httpx.HTTPStatusError as e:
-            self._handle_request_error(e)
-            return []
 
-    def get_labs(self) -> list[dict]:
-        """Get all labs.
-
-        Returns:
-            List of lab items
-            
-        Raises:
-            LMSConnectionError: If backend is unreachable
-            LMSAPIError: If API returns error
-        """
-        items = self.get_items()
-        return [item for item in items if item.get("type") == "lab"]
-
-    def get_pass_rates(self, lab: str) -> list[dict]:
-        """Get pass rates for a specific lab.
-
-        Args:
-            lab: Lab identifier (e.g., "lab-04")
-            
-        Returns:
-            List of pass rate records with task names and percentages
-            
-        Raises:
-            LMSConnectionError: If backend is unreachable
-            LMSAPIError: If API returns error
-        """
-        try:
-            response = self._client.get(
-                "/analytics/pass-rates",
-                params={"lab": lab}
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.RequestError as e:
-            self._handle_request_error(e)
-            return []
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return []  # Lab not found
-            self._handle_request_error(e)
-            return []
-
-    def get_lab_by_title(self, title: str) -> dict | None:
-        """Find a lab by its title or ID.
-
-        Args:
-            title: Lab title or ID to search for
-            
-        Returns:
-            Lab dict if found, None otherwise
-        """
-        items = self.get_items()
-        title_lower = title.lower()
-        
-        for item in items:
-            if item.get("type") != "lab":
-                continue
-            
-            # Check ID
-            item_id = str(item.get("id", ""))
-            if item_id == title_lower or f"lab-{item_id}" == title_lower:
-                return item
-            
-            # Check title
-            item_title = item.get("title", "").lower()
-            if title_lower in item_title or item_title in title_lower:
-                return item
-        
+def resolve_lab_identifier(
+    requested_lab: str,
+    items: list[dict[str, Any]],
+) -> str | None:
+    candidate = requested_lab.strip().lower()
+    if not candidate:
         return None
 
-    def get_scores(self, user_id: int, lab_id: int | None = None) -> list[dict]:
-        """Get scores for a user.
-
-        Args:
-            user_id: User ID (Telegram chat ID for now)
-            lab_id: Optional specific lab ID
-
-        Returns:
-            List of score records
-        """
-        # TODO: Implement actual scores endpoint
-        return []
+    labs = extract_labs(items)
+    for lab in labs:
+        title = str(lab.get("title", ""))
+        lowered = title.lower()
+        item_id = str(lab.get("id", "")).strip()
+        if candidate == item_id:
+            return f"lab-{item_id.zfill(2)}"
+        if candidate == f"lab-{item_id.zfill(2)}":
+            return candidate
+        if candidate == title.lower():
+            return f"lab-{item_id.zfill(2)}"
+        if candidate in lowered:
+            return f"lab-{item_id.zfill(2)}"
+        compact_title = lowered.replace(" ", "")
+        if candidate.replace(" ", "") == compact_title:
+            return f"lab-{item_id.zfill(2)}"
+    return candidate if candidate.startswith("lab-") else None

@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: backend
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -31,6 +32,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  bot:
+    container_name: bot
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    restart: unless-stopped
+    networks:
+      - lms-network
+    depends_on:
+      - backend
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN:-}
+      - LMS_API_BASE_URL=http://backend:${BACKEND_CONTAINER_PORT:?'BACKEND_CONTAINER_PORT is required'}
+      - LMS_API_KEY=${LMS_API_KEY:?'LMS_API_KEY is required'}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_API_BASE_URL=${LLM_API_BASE_URL:-http://host.docker.internal:42005/v1}
+      - LLM_API_MODEL=${LLM_API_MODEL:-qwen/qwen3-coder-plus}
+      - TELEGRAM_RETRY_DELAY_SECONDS=${TELEGRAM_RETRY_DELAY_SECONDS:-15}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./.env.bot.secret:/app/.env.bot.secret:ro
 
   postgres:
     image: ${REGISTRY_PREFIX:-harbor.pg.innopolis.university/docker-hub-cache/}postgres:18.3-alpine

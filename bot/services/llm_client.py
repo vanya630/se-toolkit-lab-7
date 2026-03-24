@@ -1,96 +1,79 @@
-"""LLM client for intent routing and natural language queries."""
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from typing import Any, cast
 
 import httpx
 
 
-class LLMClient:
-    """Client for the LLM API (Qwen Code)."""
+@dataclass(frozen=True)
+class LLMResponse:
+    content: str
+    tool_calls: list[dict[str, Any]]
 
-    def __init__(self, api_key: str, base_url: str, model: str):
-        """Initialize the LLM client.
-        
-        Args:
-            api_key: API key for authentication
-            base_url: Base URL of the LLM API
-            model: Model name to use
-        """
+
+class LLMClientError(RuntimeError):
+    pass
+
+
+class LLMClient:
+    def __init__(self, api_key: str, base_url: str, model: str) -> None:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self._client = httpx.Client(
-            base_url=self.base_url,
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            timeout=30.0,
-        )
 
-    def chat(self, messages: list[dict]) -> str:
-        """Send a chat completion request.
-        
-        Args:
-            messages: List of message dicts with role and content
-            
-        Returns:
-            Response text from the LLM
-        """
+    def chat(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
+    ) -> LLMResponse:
+        if not self.api_key:
+            raise LLMClientError("LLM_API_KEY is empty in .env.bot.secret")
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+        }
+        if tools is not None:
+            payload["tools"] = tools
+        if tool_choice is not None:
+            payload["tool_choice"] = tool_choice
+
         try:
-            response = self._client.post(
-                "/chat/completions",
-                json={
-                    "model": self.model,
-                    "messages": messages,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except httpx.RequestError as e:
-            return f"LLM error: {e}"
+            with httpx.Client(timeout=45.0) as client:
+                response = client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+                response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            reason = exc.response.reason_phrase
+            raise LLMClientError(
+                f"HTTP {exc.response.status_code} {reason} from LLM API."
+            ) from exc
+        except httpx.TimeoutException as exc:
+            raise LLMClientError("LLM request timed out.") from exc
+        except httpx.HTTPError as exc:
+            raise LLMClientError(str(exc)) from exc
 
-    def detect_intent(self, user_message: str) -> str:
-        """Detect the intent of a user message.
-        
-        Args:
-            user_message: The user's message
-            
-        Returns:
-            Intent name (e.g., "start", "help", "health", "labs", "scores")
-        """
-        system_prompt = (
-            "You are an intent classifier for a Telegram bot. "
-            "Classify the user message into one of these intents: "
-            "start, help, health, labs, scores, or general. "
-            "Respond with ONLY the intent name."
+        data = response.json()
+        message = data["choices"][0]["message"]
+        raw_tool_calls: Any = message.get("tool_calls") or []
+        tool_calls = cast(list[dict[str, Any]], raw_tool_calls)
+        return LLMResponse(
+            content=cast(str, message.get("content") or ""),
+            tool_calls=tool_calls,
         )
-        
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ]
-        
-        response = self.chat(messages)
-        return response.strip().lower()
 
-    def answer_query(self, user_message: str, context: str = "") -> str:
-        """Answer a natural language query.
-        
-        Args:
-            user_message: The user's question
-            context: Optional context data (e.g., lab info, scores)
-            
-        Returns:
-            Answer text
-        """
-        system_prompt = (
-            "You are a helpful assistant for a Software Engineering course. "
-            "Answer questions about labs, scores, and submissions. "
-            "Be concise and helpful."
-        )
-        
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        if context:
-            messages.append({"role": "system", "content": f"Context: {context}"})
-        
-        messages.append({"role": "user", "content": user_message})
-        
-        return self.chat(messages)
+
+def decode_tool_arguments(arguments: str) -> dict[str, Any]:
+    if not arguments.strip():
+        return {}
+    return json.loads(arguments)

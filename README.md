@@ -91,3 +91,30 @@ By the end of this lab, you should be able to say:
 2. [Backend Integration](./lab/tasks/required/task-2.md) — P0: slash commands + real data
 3. [Intent-Based Natural Language Routing](./lab/tasks/required/task-3.md) — P1: LLM tool use
 4. [Containerize and Document](./lab/tasks/required/task-4.md) — P3: containerize + deploy
+
+## Deploy
+
+The bot runs from the `bot/` directory and reads configuration from `.env.bot.secret`.
+For local CLI verification, use:
+
+```terminal
+cd bot
+uv sync
+uv run bot.py --test "/health"
+uv run bot.py --test "what labs are available"
+```
+
+For container deployment on the VM, keep `.env.docker.secret` and `.env.bot.secret`
+present in the repo root, then run:
+
+```terminal
+docker compose --env-file .env.docker.secret up --build -d
+docker compose --env-file .env.docker.secret ps
+docker logs bot --tail 50
+curl -sf http://localhost:42002/docs
+```
+
+The bot container talks to the backend through `http://backend:8000`, retries Telegram
+startup automatically, and still supports the same `cd bot && uv run bot.py --test "..."`
+workflow that the autochecker uses. In Telegram, start with `/start`, then use the
+inline buttons or ask plain-text questions such as `which lab has the lowest pass rate?`.
