@@ -18,6 +18,7 @@ The bot follows a layered architecture with clear separation of concerns:
 
 4. **Configuration (config.py)**: Loads environment variables from `.env.bot.secret`, providing a clean interface for accessing configuration.
 
+
 ## Task Breakdown
 
 
