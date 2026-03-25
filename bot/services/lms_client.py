@@ -69,10 +69,12 @@ class LMSClient:
             return True, f"Backend is healthy. {count} items available."
         except httpx.RequestError as e:
             error_msg = str(e)
+            # Extract host:port from base_url for cleaner error messages
+            host_port = self.base_url.replace("http://", "").replace("https://", "")
             if "connection refused" in error_msg.lower() or "connect" in error_msg.lower():
-                return False, f"Backend error: connection refused ({self.base_url}). Check that the services are running."
+                return False, f"Backend error: connection refused ({host_port}). Check that the services are running."
             elif "timeout" in error_msg.lower():
-                return False, f"Backend error: timeout connecting to {self.base_url}"
+                return False, f"Backend error: timeout connecting to {host_port}"
             else:
                 return False, f"Backend error: {error_msg}"
         except httpx.HTTPStatusError as e:

@@ -6,12 +6,12 @@ from services.lms_client import LMSClient
 
 def handle_health(user_input: str = "") -> str:
     """Handle the /health command.
-    
+
     Checks if the backend service is accessible.
-    
+
     Args:
         user_input: Optional input from user (not used for /health)
-        
+
     Returns:
         Health status message
     """
@@ -20,16 +20,12 @@ def handle_health(user_input: str = "") -> str:
         base_url=config["lms_api_base_url"],
         api_key=config["lms_api_key"]
     )
-    
+
     is_healthy, message = client.health_check()
-    
+
     if is_healthy:
-        return (
-            f"✅ Backend health: OK. {message}\n\n"
-            "🔗 Backend: Connected\n"
-            "📊 Database: Available\n"
-            "🤖 LLM Service: Ready\n\n"
-            "All systems operational!"
-        )
+        # Format: "Backend is healthy. 42 items available." - matches expected output
+        return message
     else:
-        return "⚠️ " + message
+        # Format: "Backend error: connection refused (localhost:42002). Check that the services are running."
+        return message
