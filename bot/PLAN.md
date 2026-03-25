@@ -20,6 +20,7 @@ The bot follows a layered architecture with clear separation of concerns:
 
 ## Task Breakdown
 
+
 ### Task 1: Scaffold (Current)
 - Create project structure with handlers, services, and config
 - Implement `--test` mode for offline verification
